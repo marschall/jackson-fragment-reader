@@ -4,8 +4,8 @@ import java.io.Writer;
 import java.nio.BufferOverflowException;
 import java.nio.CharBuffer;
 import java.util.List;
+import java.util.Objects;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public final class JacksonFragmentReader extends Reader {
@@ -20,6 +20,9 @@ public final class JacksonFragmentReader extends Reader {
   private boolean closed;
 
   public JacksonFragmentReader(ObjectMapper objectMapper, List<String> fragments, List<Object> parameters) {
+    Objects.requireNonNull(objectMapper, "objectMapper");
+    Objects.requireNonNull(fragments, "fragments");
+    Objects.requireNonNull(parameters, "parameters");
     this.objectMapper = objectMapper;
     this.fragments = fragments;
     this.parameters = parameters;
