@@ -1,9 +1,11 @@
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.BufferOverflowException;
 import java.nio.CharBuffer;
 import java.util.List;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public final class JacksonFragmentReader extends Reader {
@@ -33,16 +35,8 @@ public final class JacksonFragmentReader extends Reader {
     }
   }
 
-  @Override
-  public int read(char[] cbuf, int off, int len) throws IOException {
-    this.closedCheck();
-    if (this.currentFragmentIndex == this.fragments.size() + this.parameters.size()) {
-      return -1;
-    }
-    // TODO parameter validation
-    int toRead = Math.min(len, this.currentFragment.length() - this.currentCharacterIndex);
-    this.currentFragment.getChars(this.currentCharacterIndex, this.currentCharacterIndex + toRead, cbuf, off);
-    this.currentCharacterIndex += toRead;
+  private void updateRead(int read) throws IOException {
+    this.currentCharacterIndex += read;
     if (this.currentCharacterIndex == this.currentFragment.length()) {
       // TODO check for empty strings
       this.currentCharacterIndex = 0;
@@ -55,6 +49,18 @@ public final class JacksonFragmentReader extends Reader {
         }
       }
     }
+  }
+
+  @Override
+  public int read(char[] cbuf, int off, int len) throws IOException {
+    this.closedCheck();
+    if (this.currentFragmentIndex == this.fragments.size() + this.parameters.size()) {
+      return -1;
+    }
+    // TODO parameter validation
+    int toRead = Math.min(len, this.currentFragment.length() - this.currentCharacterIndex);
+    this.currentFragment.getChars(this.currentCharacterIndex, this.currentCharacterIndex + toRead, cbuf, off);
+    updateRead(toRead);
     return toRead;
   }
   
@@ -67,7 +73,22 @@ public final class JacksonFragmentReader extends Reader {
   @Override
   public int read(CharBuffer target) throws IOException {
     this.closedCheck();
-    return super.read(target);
+    if (target.hasArray()) {
+      return super.read(target);
+    } else {
+      if (this.currentFragmentIndex == this.fragments.size() + this.parameters.size()) {
+        return -1;
+      }
+      // TODO parameter validation
+      int remaining = target.remaining();
+      if (remaining == 0) {
+        throw new BufferOverflowException();
+      }
+      int toRead = Math.min(remaining, this.currentFragment.length() - this.currentCharacterIndex);
+      target.put(this.currentFragment, this.currentCharacterIndex, this.currentCharacterIndex + toRead);
+      updateRead(toRead);
+      return toRead;
+    }
   }
   
   @Override

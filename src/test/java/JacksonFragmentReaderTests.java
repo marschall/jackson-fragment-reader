@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.math.BigDecimal;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +17,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 class JacksonFragmentReaderTests {
   
+  private static final String EXPECTED = """
+      {
+        "stirngKey": "stringValue",
+        "integerKey": 42,
+        "bigDecimalKey": 10.1
+      }
+      """;
   private Reader reader;
   private ObjectMapper objectMapper;
 
@@ -38,25 +47,33 @@ class JacksonFragmentReaderTests {
   void readFully() throws IOException {
     StringWriter writer = new StringWriter();
     this.reader.transferTo(writer);
-    assertEquals("""
-        {
-          "stirngKey": "stringValue",
-          "integerKey": 42,
-          "bigDecimalKey": 10.1
-        }
-        """, writer.toString());
+    assertEquals(EXPECTED, writer.toString());
+  }
+
+  @Test
+  void charBufferHeap() throws IOException {
+    CharBuffer charBuffer = CharBuffer.allocate(EXPECTED.length());
+    while (this.reader.read(charBuffer) != -1) {
+      // nothing
+    }
+    charBuffer.flip();
+    assertEquals(EXPECTED, charBuffer.toString());
+  }
+  
+  @Test
+  void charBufferOffHeap() throws IOException {
+    CharBuffer charBuffer = ByteBuffer.allocateDirect(EXPECTED.length() * 2).asCharBuffer();
+    while (this.reader.read(charBuffer) != -1) {
+      // nothing
+    }
+    charBuffer.flip();
+    assertEquals(EXPECTED, charBuffer.toString());
   }
 
   @Test
   void readJson() throws IOException {
     JsonNode actual = this.objectMapper.readTree(this.reader);
-    JsonNode expected = this.objectMapper.readTree("""
-        {
-        "stirngKey": "stringValue",
-        "integerKey": 42,
-        "bigDecimalKey": 10.1
-      }
-      """);
+    JsonNode expected = this.objectMapper.readTree(EXPECTED);
     
     assertNotNull(actual);
     assertEquals(expected, actual);
