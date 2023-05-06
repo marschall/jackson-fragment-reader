@@ -67,7 +67,13 @@ public final class JacksonFragmentReader extends Reader {
   @Override
   public int read() throws IOException {
     this.closedCheck();
-    return super.read();
+    if (this.currentFragmentIndex == this.fragments.size() + this.parameters.size()) {
+      return -1;
+    }
+    // TODO empty string
+    int c = this.currentFragment.charAt(currentCharacterIndex);
+    updateRead(1);
+    return c;
   }
   
   @Override

@@ -53,9 +53,20 @@ class JacksonFragmentReaderTests {
   }
 
   @Test
-  void readFully() throws IOException {
+  void transferTo() throws IOException {
     StringWriter writer = new StringWriter();
     this.reader.transferTo(writer);
+    assertEquals(EXPECTED, writer.toString());
+  }
+  
+  @Test
+  void readSingleBype() throws IOException {
+    StringWriter writer = new StringWriter();
+    int c = this.reader.read();
+    while (c != -1) {
+      writer.write(c);
+      c = this.reader.read();
+    }
     assertEquals(EXPECTED, writer.toString());
   }
 
