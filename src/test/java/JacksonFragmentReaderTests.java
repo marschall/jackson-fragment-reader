@@ -7,6 +7,8 @@ import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
+import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +16,8 @@ import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 class JacksonFragmentReaderTests {
   
@@ -21,7 +25,8 @@ class JacksonFragmentReaderTests {
       {
         "stirngKey": "stringValue",
         "integerKey": 42,
-        "bigDecimalKey": 10.1
+        "bigDecimalKey": 10.1,
+        "dateKey": "2023-05-06"
       }
       """;
   private Reader reader;
@@ -30,6 +35,8 @@ class JacksonFragmentReaderTests {
   @BeforeEach
   void setUp() {
     this.objectMapper = new ObjectMapper();
+    this.objectMapper.registerModule(new JavaTimeModule());
+    this.objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
     this.reader = new JacksonFragmentReader(objectMapper, List.of("""
         {
           "stirngKey":\s""",
@@ -38,9 +45,11 @@ class JacksonFragmentReaderTests {
         """
            ,\n  "bigDecimalKey":\s""",
         """
+           ,\n  "dateKey":\s""",
+        """
         \n}
         """),
-        List.of("stringValue", 42, new BigDecimal("10.1")));
+        List.of("stringValue", 42, new BigDecimal("10.1"), LocalDate.of(2023, Month.MAY, 6)));
   }
 
   @Test
