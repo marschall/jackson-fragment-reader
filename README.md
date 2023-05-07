@@ -7,7 +7,7 @@ Advantages
 ----------
 
 - Avoids large intermediate allocations
-- Uses `ObjectMapper` to correctly serialize values
+- Uses `ObjectMapper` to correctly serialize values instead of relying on their string representation.
 
 
 
