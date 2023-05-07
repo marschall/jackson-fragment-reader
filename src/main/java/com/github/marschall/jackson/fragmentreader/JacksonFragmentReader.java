@@ -14,7 +14,7 @@ public final class JacksonFragmentReader extends Reader {
   private final ObjectMapper objectMapper;
   private final List<String> fragments;
   private final List<Object> parameters;
-  
+
   private int currentFragmentIndex;
   private int currentCharacterIndex;
   private String currentFragment;
@@ -32,7 +32,7 @@ public final class JacksonFragmentReader extends Reader {
     this.currentFragment = fragments.get(0);
     this.closed = false;
   }
-  
+
   private void closedCheck() throws IOException {
     if (this.closed) {
       throw new IOException("reader is closed");
@@ -64,10 +64,10 @@ public final class JacksonFragmentReader extends Reader {
     // TODO parameter validation
     int toRead = Math.min(len, this.currentFragment.length() - this.currentCharacterIndex);
     this.currentFragment.getChars(this.currentCharacterIndex, this.currentCharacterIndex + toRead, cbuf, off);
-    updateRead(toRead);
+    this.updateRead(toRead);
     return toRead;
   }
-  
+
   @Override
   public int read() throws IOException {
     this.closedCheck();
@@ -76,10 +76,10 @@ public final class JacksonFragmentReader extends Reader {
     }
     // TODO empty string
     int c = this.currentFragment.charAt(currentCharacterIndex);
-    updateRead(1);
+    this.updateRead(1);
     return c;
   }
-  
+
   @Override
   public int read(CharBuffer target) throws IOException {
     this.closedCheck();
@@ -96,15 +96,22 @@ public final class JacksonFragmentReader extends Reader {
       }
       int toRead = Math.min(remaining, this.currentFragment.length() - this.currentCharacterIndex);
       target.put(this.currentFragment, this.currentCharacterIndex, this.currentCharacterIndex + toRead);
-      updateRead(toRead);
+      this.updateRead(toRead);
       return toRead;
     }
   }
-  
+
   @Override
   public long transferTo(Writer out) throws IOException {
     this.closedCheck();
-    return super.transferTo(out);
+    long transferred = 0L;
+    while (this.currentFragmentIndex < this.fragments.size() + this.parameters.size()) {
+      int toTransfer = this.currentFragment.length() - this.currentCharacterIndex;
+      out.write(this.currentFragment, this.currentCharacterIndex, toTransfer);
+      transferred += toTransfer;
+      this.updateRead(toTransfer);
+    }
+    return transferred;
   }
 
   @Override

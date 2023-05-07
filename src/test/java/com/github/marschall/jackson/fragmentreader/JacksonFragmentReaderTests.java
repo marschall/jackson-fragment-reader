@@ -56,7 +56,8 @@ class JacksonFragmentReaderTests {
   @Test
   void transferTo() throws IOException {
     StringWriter writer = new StringWriter();
-    this.reader.transferTo(writer);
+    long transferred = this.reader.transferTo(writer);
+    assertEquals(EXPECTED.length(), transferred, "number of characters transferred");
     assertEquals(EXPECTED, writer.toString());
   }
   
