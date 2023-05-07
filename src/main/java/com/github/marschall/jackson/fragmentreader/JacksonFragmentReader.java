@@ -1,3 +1,4 @@
+package com.github.marschall.jackson.fragmentreader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
